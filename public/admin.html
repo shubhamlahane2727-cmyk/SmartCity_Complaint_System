@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicSync | Admin Portal</title>
+    <!-- Modern Styling -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #6366f1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --card-bg: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); }
+
+        /* Login Layout */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center;
+            z-index: 10000; backdrop-filter: blur(8px);
+        }
+        .login-box {
+            background: white; padding: 2.5rem; border-radius: 1.5rem; width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); text-align: center;
+        }
+        .login-box h2 { margin-bottom: 2rem; color: var(--primary); }
+        .login-box input {
+            width: 100%; padding: 0.75rem 1rem; margin-bottom: 1rem;
+            border: 1px solid #e2e8f0; border-radius: 0.5rem; outline: none; transition: 0.3s;
+        }
+        .login-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        .login-box button {
+            width: 100%; background: var(--primary); color: white; padding: 0.75rem;
+            border: none; border-radius: 0.5rem; font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .login-box button:hover { background: var(--secondary); transform: translateY(-2px); }
+
+        /* Dashboard Layout */
+        .wrapper { padding: 2rem; max-width: 1400px; margin: auto; display: none; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 1.8rem; font-weight: 800; color: #0f172a; }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card {
+            background: var(--card-bg); padding: 1.5rem; border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 5px solid var(--primary);
+            transition: 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .stat-card.resolved { border-left-color: var(--success); }
+        .stat-card.pending { border-left-color: var(--warning); }
+        .stat-label { font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase; }
+        .stat-value { font-size: 2rem; font-weight: 800; margin-top: 0.5rem; }
+
+        /* Map & Table Grid */
+        .main-grid { display: grid; grid-template-columns: 2fr 1.2fr; gap: 1.5rem; }
+        #map { height: 600px; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        
+        .table-container { 
+            background: white; padding: 1.5rem; border-radius: 1.5rem; 
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); height: 600px; overflow-y: auto; 
+        }
+        .table-header { padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1rem; }
+        .complaint-row { 
+            padding: 1rem; border-radius: 0.75rem; margin-bottom: 1rem; background: #f8fafc;
+            border: 1px solid #e2e8f0; transition: 0.2s;
+        }
+        .complaint-row:hover { background: #eff6ff; border-color: #bfdbfe; }
+        .status-badge { 
+            display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;
+            background: #e2e8f0; color: #475569;
+        }
+        .status-badge.resolved { background: #d1fae5; color: #065f46; }
+        .status-badge.pending { background: #fef3c7; color: #92400e; }
+        
+        .btn-resolve { 
+            margin-top: 0.5rem; background: var(--success); color: white; border: none; 
+            padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;
+        }
+        .dept-tag { 
+            font-size: 0.7rem; background: #ede9fe; color: #5b21b6; padding: 2px 6px; border-radius: 4px; margin-left: 5px;
+        }
+
+        .dept-tabs { 
+            display: flex; gap: 10px; margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 5px;
+        }
+        .dept-tab { 
+            padding: 10px 20px; background: #e2e8f0; border-radius: 12px; cursor: pointer; 
+            font-size: 0.9rem; font-weight: 600; white-space: nowrap; transition: 0.3s;
+            border: 2px solid transparent;
+        }
+        .dept-tab.active { 
+            background: white; border-color: var(--primary); color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .dept-tab:hover:not(.active) { background: #cbd5e1; }
+
+        /* Modal / Popup */
+        .leaflet-popup-content { font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Login Modal -->
+    <div id="loginOverlay">
+        <div class="login-box">
+            <i class="fa-solid fa-shield-halved fa-3x" style="color: var(--primary); margin-bottom: 1rem;"></i>
+            <h2>Admin Portal Access</h2>
+            <input type="email" id="adminEmail" placeholder="admin@civicsync.com">
+            <input type="password" id="adminPass" placeholder="Admin Password">
+            <button onclick="handleLogin()">Authorize Login</button>
+            <p id="loginError" style="color: red; font-size: 0.8rem; margin-top: 1rem; display: none;">Invalid Admin Credentials</p>
+        </div>
+    </div>
+
+    <div class="wrapper" id="adminDashboard">
+        <div class="header">
+            <div>
+                <h1>🛰️ Live Citizen Response Command</h1>
+                <p style="color: #64748b;">Managing Chhatrapati Sambhajinagar Municipal Infrastructure</p>
+            </div>
+            <button onclick="localStorage.removeItem('adminAuth'); location.reload()" style="background:none; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 8px; cursor: pointer;">
+                <i class="fa-solid fa-power-off"></i> Logout
+            </button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Reports</div>
+                <div class="stat-value" id="statsTotal">0</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="stat-label">Pending Review</div>
+                <div class="stat-value" id="statsPending">0</div>
+            </div>
+            <div class="stat-card resolved">
+                <div class="stat-label">Cases Resolved</div>
+                <div class="stat-value" id="statsResolved">0</div>
+            </div>
+        </div>
+
+        <div class="dept-tabs" id="deptTabs">
+            <div class="dept-tab active" onclick="setDept('All')">All Departments</div>
+            <div class="dept-tab" onclick="setDept('Sanitation')">Sanitation</div>
+            <div class="dept-tab" onclick="setDept('PWD (Roads)')">PWD (Roads)</div>
+            <div class="dept-tab" onclick="setDept('Electrical')">Electrical</div>
+            <div class="dept-tab" onclick="setDept('Water Dept')">Water Dept</div>
+            <div class="dept-tab" onclick="setDept('General')">General</div>
+        </div>
+
+        <div class="main-grid">
+            <div id="map"></div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Recent Issues</h3>
+                </div>
+                <div id="complaintsList">
+                    <!-- Dynamic -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+    <script>
+        let map, heatLayer, markerGroup;
+        
+        // --- Authentication ---
+        function handleLogin() {
+            const email = document.getElementById('adminEmail').value;
+            const pass = document.getElementById('adminPass').value;
+            
+            fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password: pass })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    localStorage.setItem('adminAuth', 'true');
+                    initDashboard();
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            });
+        }
+
+        window.onload = () => {
+            if(localStorage.getItem('adminAuth') === 'true') initDashboard();
+        }
+
+        function initDashboard() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('adminDashboard').style.display = 'block';
+            
+            initMap();
+            refreshData();
+            setInterval(refreshData, 30000); // 30s Refresh
+        }
+
+        // --- Map & Data logic ---
+        function initMap() {
+            map = L.map('map').setView([19.8762, 75.3433], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap and CivicSync CC'
+            }).addTo(map);
+            markerGroup = L.layerGroup().addTo(map);
+        }
+
+        let selectedDept = 'All';
+        let allComplaints = [];
+
+        async function refreshData() {
+            // Stats
+            const stats = await fetch('/api/admin/stats').then(r => r.json());
+            
+            // List & Map Points
+            allComplaints = await fetch('/api/admin/complaints').then(r => r.json());
+            
+            updateStats(stats);
+            renderFilteredData();
+        }
+
+        function setDept(dept) {
+            selectedDept = dept;
+            // Update UI tabs
+            document.querySelectorAll('.dept-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.textContent.includes(dept) || (dept === 'All' && tab.textContent.includes('All')));
+            });
+            renderFilteredData();
+        }
+
+        function updateStats(stats) {
+            if (selectedDept === 'All') {
+                document.getElementById('statsTotal').textContent = stats.total;
+                document.getElementById('statsPending').textContent = stats.pending || 0;
+                document.getElementById('statsResolved').textContent = stats.resolved || 0;
+            } else {
+                // Filter stats for specific dept
+                const deptItems = allComplaints.filter(c => c.department === selectedDept);
+                document.getElementById('statsTotal').textContent = deptItems.length;
+                document.getElementById('statsPending').textContent = deptItems.filter(c => c.status !== 'Resolved').length;
+                document.getElementById('statsResolved').textContent = deptItems.filter(c => c.status === 'Resolved').length;
+            }
+        }
+
+        function renderFilteredData() {
+            const filtered = selectedDept === 'All' 
+                ? allComplaints 
+                : allComplaints.filter(c => c.department === selectedDept);
+            
+            renderList(filtered);
+            renderMap(filtered);
+        }
+
+        function renderList(data) {
+            const list = document.getElementById('complaintsList');
+            list.innerHTML = '';
+            data.forEach(item => {
+                const isRes = item.status === 'Resolved';
+                const div = document.createElement('div');
+                div.className = 'complaint-row';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:start">
+                        <strong>${item.ticket_id}</strong>
+                        <span class="status-badge ${item.status.toLowerCase()}">${item.status}</span>
+                    </div>
+                    <p style="font-size:0.85rem; margin:5px 0;">${item.location} <span class="dept-tag">${item.department || 'General'}</span></p>
+                    <p style="font-size:0.8rem; color:#64748b;">${item.description.substring(0, 50)}...</p>
+                    ${!isRes ? `<button onclick="markResolved(${item.id})" class="btn-resolve"><i class="fa-solid fa-check"></i> Mark Resolved</button>` : ''}
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function renderMap(data) {
+            markerGroup.clearLayers();
+            const heatData = [];
+            
+            data.forEach(item => {
+                if(item.latitude && item.longitude) {
+                    heatData.push([item.latitude, item.longitude, 0.7]);
+                    
+                    const marker = L.circleMarker([item.latitude, item.longitude], {
+                        radius: 8,
+                        fillColor: item.status === 'Resolved' ? "#10b981" : "#ef4444",
+                        color: "#fff", weight: 1, fillOpacity: 0.8
+                    }).addTo(markerGroup);
+
+                    const popupHtml = `
+                        <div style="min-width:200px">
+                            <h4>${item.category}</h4>
+                            <p style="font-size:0.8rem;">Status: <b>${item.status}</b></p>
+                            <p style="font-size:0.8rem;">Loc: ${item.location}</p>
+                            <hr style="margin:8px 0;">
+                            <select onchange="updateStatus(${item.id}, this.value)" style="width:100%; padding:2px;">
+                                <option value="Pending" ${item.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                <option value="Resolved" ${item.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                                <option value="Spam" ${item.status === 'Spam' ? 'selected' : ''}>Spam</option>
+                            </select>
+                        </div>
+                    `;
+                    marker.bindPopup(popupHtml);
+                }
+            });
+
+            if(heatLayer) map.removeLayer(heatLayer);
+            heatLayer = L.heatLayer(heatData, { radius: 25 }).addTo(map);
+        }
+
+        async function markResolved(id) {
+            await fetch('/api/admin/resolve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            refreshData();
+        }
+
+        async function updateStatus(id, newStatus) {
+            // Re-using the resolve API for custom status is better handled by a generic update route
+            // For now, simple implementation
+            console.log("Updating", id, "to", newStatus);
+            // I'll add a generic update status endpoint in server.js too
+            await fetch('/api/admin/update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status: newStatus })
+            });
+            refreshData();
+        }
+    </script>
+</body>
+</html>

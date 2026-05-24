@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - CiviSync</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <div class="bg-glow-2"></div>
+
+    <nav class="navbar">
+        <a href="/" class="logo">Civi<span>Sync</span></a>
+        <div class="nav-links">
+            <a href="/" class="nav-text">Back to Home</a>
+        </div>
+    </nav>
+
+    <div class="auth-wrapper">
+        <div class="auth-card" style="max-width: 500px;">
+            <div class="auth-header">
+                <h2>Create Account</h2>
+                <p>Join CivicSync and report issues instantly</p>
+            </div>
+
+            <form id="registerForm">
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>First Name</label>
+                        <input type="text" name="first_name" class="form-control" placeholder="John" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Last Name</label>
+                        <input type="text" name="last_name" class="form-control" placeholder="Doe" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="email" name="email" id="emailInput" class="form-control"
+                            placeholder="name@example.com" required style="flex: 1;">
+                        <button type="button" class="btn btn-outline" id="sendOtpBtn" onclick="sendOtp()"
+                            style="padding: 0.5rem 1rem;">Send OTP</button>
+                    </div>
+                    <small id="otpMessage" style="color: var(--primary); display: none; margin-top: 0.5rem;">OTP sent!
+                        Check your email.</small>
+                </div>
+
+                <div class="form-group" id="otpGroup">
+                    <label>Enter OTP</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" name="otp" id="otpInput" class="form-control" placeholder="123456"
+                            pattern="\d{6}" style="flex: 1;">
+                        <button type="button" class="btn btn-outline" id="verifyOtpBtn" onclick="verifyOtp()"
+                            style="padding: 0.5rem 1rem;">Verify</button>
+                    </div>
+                    <small id="verifyMessage" style="display: none; margin-top: 0.5rem; font-weight: 500;"></small>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Contact Number</label>
+                        <input type="tel" name="contact_number" class="form-control" placeholder="9876543210" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Date of Birth</label>
+                        <input type="date" name="dob" class="form-control" required style="color-scheme: light;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Locality (Area)</label>
+                    <input type="text" name="locality" class="form-control" placeholder="Downtown" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Create a strong password"
+                        required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+            </form>
+
+            <script>
+                async function sendOtp() {
+                    const email = document.getElementById('emailInput').value;
+                    const btn = document.getElementById('sendOtpBtn');
+                    const msg = document.getElementById('otpMessage');
+                    const otpGroup = document.getElementById('otpGroup');
+                    const otpInput = document.getElementById('otpInput');
+
+                    if (!email || !email.includes('@')) {
+                        alert("Please enter a valid email first.");
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    btn.innerText = "Sending...";
+
+                    try {
+                        const response = await fetch('http://localhost:8080/send-otp', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email })
+                        });
+
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            msg.style.display = "block";
+                            msg.style.color = "var(--primary)";
+                            msg.innerText = "OTP sent! Check your email.";
+                            otpGroup.style.display = "block";
+                            otpInput.required = true;
+                            btn.innerText = "Sent ✅";
+                        } else {
+                            msg.style.display = "block";
+                            msg.style.color = "red";
+                            msg.innerText = "Failed to send OTP.";
+                            btn.disabled = false;
+                            btn.innerText = "Send OTP";
+                        }
+                    } catch (err) {
+                        msg.style.display = "block";
+                        msg.style.color = "red";
+                        msg.innerText = "Error requesting OTP.";
+                        btn.disabled = false;
+                        btn.innerText = "Send OTP";
+                    }
+                }
+
+                let isOtpVerified = false;
+
+                async function verifyOtp() {
+                    const email = document.getElementById('emailInput').value;
+                    const otp = document.getElementById('otpInput').value;
+                    const msg = document.getElementById('verifyMessage');
+                    const btn = document.getElementById('verifyOtpBtn');
+                    const otpInput = document.getElementById('otpInput');
+                    const emailInput = document.getElementById('emailInput');
+
+                    if (!otp.trim()) {
+                        alert("Please enter the OTP.");
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    btn.innerText = "Verifying...";
+
+                    try {
+                        const response = await fetch('http://localhost:8080/verify-otp', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email, otp })
+                        });
+
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            msg.style.display = "block";
+                            msg.style.color = "var(--primary)";
+                            msg.innerText = "Identity Verified ✅!";
+                            btn.innerText = "Verified ✅";
+                            otpInput.readOnly = true;
+                            emailInput.readOnly = true;
+                            document.getElementById('sendOtpBtn').disabled = true;
+                            isOtpVerified = true;
+                        } else {
+                            msg.style.display = "block";
+                            msg.style.color = "red";
+                            msg.innerText = "Invalid OTP. Try again ❌";
+                            btn.disabled = false;
+                            btn.innerText = "Verify";
+                        }
+                    } catch (err) {
+                        msg.style.display = "block";
+                        msg.style.color = "red";
+                        msg.innerText = "Error trying to verify.";
+                        btn.disabled = false;
+                        btn.innerText = "Verify";
+                    }
+                }
+
+                // Prevent final form submission if OTP isn't verified
+                document.querySelector('form').addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    if (!isOtpVerified) {
+                        alert("⚠️ Please verify your OTP to prove your identity before registering!");
+                        return;
+                    }
+                    
+                    const formData = new FormData(e.target);
+                    const data = Object.fromEntries(formData.entries());
+                    
+                    try {
+                        const response = await fetch('http://localhost:8080/register', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+                        const text = await response.text();
+                        if (text.includes("Successfully") || response.ok) {
+                            alert("Registered Successfully ✅");
+                            window.location.href = "/login.html";
+                        } else {
+                            alert(text);
+                        }
+                    } catch (err) {
+                        alert("Registration error. Ensure the backend is running.");
+                    }
+                });
+            </script>
+
+            <div class="auth-footer">
+                Already have an account? <a href="/login.html">Sign in</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

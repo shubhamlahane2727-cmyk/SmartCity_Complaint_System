@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - CivicSync</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+</head>
+
+<body class="dashboard-body">
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <nav class="navbar">
+        <a href="/" class="logo">Civic<span>Sync</span></a>
+        <div class="nav-links">
+            <div class="user-avatar" id="userAvatar">U</div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- Sidebar / User Profile -->
+        <aside class="dashboard-sidebar">
+            <div class="profile-card card">
+                <div class="profile-header">
+                    <div class="avatar-large" id="profileAvatar">U</div>
+                    <h3 id="profileName">Loading...</h3>
+                    <p class="text-muted" style="margin-top: 5px;">Citizen Reporter</p>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat">
+                        <h4 id="statTotal" style="color: var(--text-main); font-size: 1.5rem;">0</h4>
+                        <p class="text-muted" style="font-size: 0.85rem;">Total</p>
+                    </div>
+                    <div class="stat">
+                        <h4 id="statResolved" style="color: var(--primary);">0</h4>
+                        <p class="text-muted" style="font-size: 0.85rem;">Resolved</p>
+                    </div>
+                    <div class="stat">
+                        <h4 id="statPending" style="color: #f59e0b;">0</h4>
+                        <p class="text-muted" style="font-size: 0.85rem;">Pending</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline btn-block" style="margin-top: 1.5rem;" onclick="signOut()">Sign
+                    Out</button>
+            </div>
+
+            <div class="history-card card mt-4">
+                <h3 style="margin-bottom: 1rem; color: var(--text-main);">Recent History</h3>
+                <ul class="history-list" id="historyList">
+                    <!-- Dynamic -->
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <div class="welcome-banner card">
+                <h2 id="welcomeText" style="margin-bottom: 0.5rem; font-size: 1.8rem; color: var(--text-main);">Welcome
+                    back!</h2>
+                <p class="text-muted">Track your ongoing civic issues or dynamically report a new one using our
+                    automated assistant.</p>
+                <button id="reportIssueBtn" class="btn btn-primary mt-3">Report New Issue</button>
+            </div>
+
+            <div class="tracking-section mt-4">
+                <div class="tracking-header">
+                    <h3 style="color: var(--text-main); font-size: 1.3rem;">Track Complaints</h3>
+                    <div class="search-box" style="flex: 1; max-width: 400px; background: rgba(0,0,0,0.05);">
+                        <i class="fa-solid fa-search text-muted"></i>
+                        <input type="text" id="ticketSearch" placeholder="Search by Ticket ID, Category, or Location..."
+                            style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="tracking-cards" id="trackingContainer">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+
+            <!-- Heatmap Section -->
+            <div class="heatmap-section mt-4 card" style="margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem;">
+                    <h3 style="color: var(--text-main); font-size: 1.3rem;"><i class="fa-solid fa-map-location-dot"></i> Problem Hotspots (Live Analysis)</h3>
+                    <div class="text-muted" style="font-size: 0.85rem;">Registered by all citizens in Chh. Sambhajinagar</div>
+                </div>
+
+                <div style="display: flex; flex-direction: row; gap: 1.5rem; flex-wrap: wrap;">
+                    <div id="heatmapContainer" style="height: 400px; flex: 2; min-width: 300px; border-radius: 8px; z-index: 1;"></div>
+                    
+                    <div class="analysis-card" style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.02); padding: 1.5rem; border-radius: 8px;">
+                        <h4 style="margin-bottom: 1rem; color: var(--text-main); font-size: 1rem; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 0.5rem;">Top Complaint Areas</h4>
+                        <ul id="hotspotRankings" style="list-style: none; padding: 0;">
+                            <!-- Dynamic Rankings -->
+                            <p class="text-muted" style="font-size: 0.8rem;">Gathering data...</p>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Extract Name and Email from URL query params/localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        let userName = urlParams.get('name') || localStorage.getItem('civicName') || "";
+        let userEmail = urlParams.get('email') || localStorage.getItem('civicEmail') || "";
+
+        // Auth Check - if no name/email, redirect to index (prevent seeing previous user)
+        if (!userName || !userEmail) {
+            window.location.href = '/login.html';
+        }
+
+        // Persist to LocalStorage
+        localStorage.setItem('civicName', userName);
+        localStorage.setItem('civicEmail', userEmail);
+
+        function signOut() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        // Update UI with User Name and Initial
+        document.getElementById('profileName').textContent = userName;
+        document.getElementById('welcomeText').textContent = `Welcome back, ${userName}!`;
+
+        const initial = userName.charAt(0).toUpperCase();
+        document.getElementById('userAvatar').textContent = initial;
+        document.getElementById('profileAvatar').textContent = initial;
+
+        // Route Report Issue button
+        document.getElementById('reportIssueBtn').onclick = () => {
+            window.location.href = '/report.html?name=' + encodeURIComponent(userName) + '&email=' + encodeURIComponent(userEmail);
+        };
+
+
+
+        // --- Database & Tracing Logic ---
+        let allTickets = [];
+        const trackingContainer = document.getElementById('trackingContainer');
+        const historyList = document.getElementById('historyList');
+
+        function loadComplaints() {
+            const params = new URLSearchParams();
+            if (userEmail) params.set('email', userEmail);
+            if (userName) params.set('name', userName);
+            if (!userEmail && !userName) return;
+
+            fetch(`/complaints?${params.toString()}`)
+                .then(r => r.json())
+                .then(data => {
+                    console.log('Loaded complaints:', data.length);
+                    allTickets = data;
+                    renderTickets(allTickets);
+                    renderStatsAndHistory();
+                })
+                .catch(err => console.error('Load error:', err));
+        }
+
+        function renderTickets(tickets) {
+            trackingContainer.innerHTML = '';
+            if (tickets.length === 0) {
+                trackingContainer.innerHTML = `<p style="padding: 1rem; color: var(--text-muted);">No records found for this account.</p>`;
+                return;
+            }
+            tickets.forEach(ticket => {
+                const isResolved = ticket.status === 'Resolved';
+                const dateStr = new Date(ticket.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                const card = document.createElement('div');
+                card.className = 'track-card card';
+                card.style.cursor = 'pointer';
+                card.onclick = () => showTicketDetail(ticket.ticket_id);
+                card.innerHTML = `
+                    <div class="track-status ${isResolved ? 'resolved' : 'pending'}">${ticket.status}</div>
+                    <h4 style="color: var(--text-main);">${ticket.category}</h4>
+                    <p class="text-muted" style="font-size: 0.8rem;">${ticket.ticket_id}</p>
+                    <p class="text-muted" style="margin-top: 5px;">📍 ${ticket.location}</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${isResolved ? 'resolved-fill' : ''}" style="width: ${isResolved ? '100%' : '60%'}"></div>
+                    </div>
+                    <p class="status-text">${isResolved ? 'Resolved' : 'Est. Fix: ' + (ticket.estimated_resolution || 'Processing')}</p>
+                    <p class="date" style="position: absolute; bottom: 10px; right: 15px; font-size: 0.7rem;">${dateStr}</p>
+                `;
+                trackingContainer.appendChild(card);
+            });
+        }
+
+        async function showTicketDetail(tid) {
+            try {
+                const res = await fetch(`/track/${tid}`);
+                const data = await res.json();
+                if (!res.ok) throw new Error("Ticket not found");
+
+                // Simple alert/overlay for now to show tracking history
+                const timeline = data.timeline.map(upd => `[${new Date(upd.updated_at).toLocaleDateString()}] ${upd.status}: ${upd.update_text}`).join('\n');
+                alert(`TRACKING FOR: ${tid}\n\nStatus: ${data.status}\nLocation: ${data.location}\n\nHistory:\n${timeline}`);
+            } catch (e) {
+                alert("Error loading tracking details");
+            }
+        }
+
+        function renderStatsAndHistory() {
+            const resolvedCount = allTickets.filter(t => t.status === 'Resolved' || t.status === 'Accepted' || t.status === 'In Progress').length;
+            const strictlyResolved = allTickets.filter(t => t.status === 'Resolved').length;
+
+            document.getElementById('statTotal').textContent = allTickets.length;
+            document.getElementById('statResolved').textContent = strictlyResolved;
+            document.getElementById('statPending').textContent = allTickets.length - strictlyResolved;
+
+            historyList.innerHTML = '';
+            allTickets.slice(0, 4).forEach(ticket => {
+                const li = document.createElement('li');
+                const dateStr = new Date(ticket.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                li.innerHTML = `
+                    <i class="fa-solid ${ticket.status === 'Resolved' ? 'fa-check-circle icon-resolved' : 'fa-spinner fa-spin icon-pending'}"></i>
+                    <div>
+                        <strong style="font-size: 0.9rem;">${ticket.category}</strong>
+                        <span class="date">${dateStr} • ${ticket.status}</span>
+                    </div>
+                `;
+                historyList.appendChild(li);
+            });
+        }
+
+        loadComplaints(); // Initial load
+
+        document.getElementById('ticketSearch').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allTickets.filter(t =>
+                (t.ticket_id || '').toLowerCase().includes(query) ||
+                (t.category || '').toLowerCase().includes(query) ||
+                (t.location || '').toLowerCase().includes(query)
+            );
+            renderTickets(filtered);
+        });
+
+        // Load Heatmap
+        let heatmapInstance;
+        let heatLayerInstance;
+        let markerGroup; // For clickable markers
+
+        function loadHeatmapData() {
+            fetch('/api/complaints/locations')
+                .then(r => r.json())
+                .then(data => {
+                    if (heatLayerInstance) heatmapInstance.removeLayer(heatLayerInstance);
+                    if (markerGroup) heatmapInstance.removeLayer(markerGroup);
+                    
+                    markerGroup = L.layerGroup().addTo(heatmapInstance);
+
+                    if (data && data.length > 0) {
+                        // 1. Heatmap layer
+                        const heatData = data.map(pt => [pt.lat, pt.lng, pt.intensity]);
+                        heatLayerInstance = L.heatLayer(heatData, {
+                            radius: 40, blur: 30, maxZoom: 17,
+                            gradient: { 0.4: 'rgba(0,0,255,0.5)', 0.6: 'rgba(255,255,0,0.6)', 1.0: 'rgba(255,0,0,0.7)' }
+                        }).addTo(heatmapInstance);
+
+                        // 2. Individual Point Markers & Grouped Rankings
+                        const rankingList = document.getElementById('hotspotRankings');
+                        rankingList.innerHTML = '';
+                        
+                        // Aggregate counts by location for ranking sidebar
+                        const locationCounts = {};
+                        data.forEach(pt => {
+                            if (!locationCounts[pt.locationName]) {
+                                locationCounts[pt.locationName] = { count: 0, lat: pt.lat, lng: pt.lng };
+                            }
+                            locationCounts[pt.locationName].count += 1;
+                        });
+                        
+                        const sortedRankings = Object.entries(locationCounts)
+                            .sort((a,b) => b[1].count - a[1].count);
+
+                        // Plot individual marker for EACH complaint
+                        data.forEach(pt => {
+                            L.circleMarker([pt.lat, pt.lng], {
+                                radius: 6, // Standard small dot size for individual reports
+                                fillColor: "#ef4444", 
+                                color: "#fff",
+                                weight: 1,
+                                fillOpacity: 0.9
+                            }).bindPopup(`
+                                <div style="font-family: sans-serif; min-width: 150px;">
+                                    <h4 style="margin: 0; color: #1e293b; border-bottom: 1px solid #ddd; padding-bottom: 5px;">${pt.locationName}</h4>
+                                    <p style="margin: 8px 0 0; color: #ef4444; font-weight: bold; font-size: 0.95rem;">
+                                        <i class="fa-solid fa-file-invoice"></i> Issue: ${pt.type || 'General'}
+                                    </p>
+                                </div>
+                            `).addTo(markerGroup);
+                        });
+                        
+                        // Render Top Complaints Sidebar
+                        sortedRankings.forEach(([locName, locData], index) => {
+                            if(index < 5 && locData.count > 0) {
+                                const li = document.createElement('li');
+                                li.className = "rank-item";
+                                li.style.cssText = "display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer;";
+                                li.onclick = () => heatmapInstance.setView([locData.lat, locData.lng], 15);
+                                li.innerHTML = `
+                                    <div style="font-size: 0.85rem;">
+                                        <span style="color: var(--primary); font-weight: bold;">#${index+1}</span> 
+                                        <span style="margin-left: 5px;">${locName}</span>
+                                    </div>
+                                    <div style="background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                                        ${locData.count}
+                                    </div>
+                                `;
+                                rankingList.appendChild(li);
+                            }
+                        });
+                    }
+                })
+                .catch(err => console.error("Error loading heatmap data:", err));
+        }
+
+        function initHeatmap() {
+            heatmapInstance = L.map('heatmapContainer', { scrollWheelZoom: false }).setView([19.8762, 75.3433], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(heatmapInstance);
+            loadHeatmapData();
+        }
+
+        // Auto-Update trigger exposed globally so other scripts/forms can call it
+        window.loadHeatmapData = loadHeatmapData;
+
+        // Listen for new submissions from the report form (cross-tab update)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'forceHeatmapUpdate') {
+                loadHeatmapData();
+                loadComplaints();
+            }
+        });
+
+        setTimeout(initHeatmap, 500);
+    </script>
+    
+    <!-- Watermark Logo -->
+    <img src="/logo.png" alt="CivicSync Watermark" class="bottom-right-logo">
+</body>
+
+</html>

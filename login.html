@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - CiviSync</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <div class="bg-glow-1"></div>
+
+    <nav class="navbar">
+        <a href="/" class="logo">Civi<span>Sync</span></a>
+        <div class="nav-links">
+            <a href="/" class="nav-text">Back to Home</a>
+        </div>
+    </nav>
+
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>Welcome Back</h2>
+                <p>Enter your credentials to access your account</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" name="email" class="form-control" placeholder="name@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+            </form>
+
+            <script>
+                document.getElementById("loginForm").addEventListener("submit", async function(e) {
+                    e.preventDefault();
+                    const email = document.getElementById("loginEmail").value;
+                    const password = document.getElementById("loginPassword").value;
+                    
+                    try {
+                        const response = await fetch("http://localhost:8080/login", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ email, password })
+                        });
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert("Login successful!");
+                            localStorage.setItem("userEmail", result.email);
+                            localStorage.setItem("userName", result.name);
+                            window.location.href = `/dashboard.html?email=${encodeURIComponent(result.email)}&name=${encodeURIComponent(result.name)}`;
+                        } else {
+                            alert(result || "Invalid credentials");
+                        }
+                    } catch(err) {
+                        alert("Error connecting to server.");
+                    }
+                });
+            </script>
+
+            <div class="auth-footer">
+                Don't have an account? <a href="/register.html">Register here</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

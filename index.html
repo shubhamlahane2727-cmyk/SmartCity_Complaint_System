@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CiviSync - Chhatrapati Sambhajinagar Municipal Corporation</title>
+    <meta name="description" content="AI-Based Citizen Helpline & Complaint System">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        deepBlue: '#1a365d',
+                        municipalBlue: '#2b6cb0',
+                        trustGray: '#f7fafc',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background-color: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 5px 0;
+        }
+
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 25s linear infinite;
+            font-weight: 500;
+            color: #1a365d;
+        }
+
+        @keyframes ticker {
+            0% {
+                transform: translate3d(100%, 0, 0);
+            }
+
+            100% {
+                transform: translate3d(-100%, 0, 0);
+            }
+        }
+
+        .hero-govt {
+            background: #ffffff;
+            color: #1a365d;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Government Strip -->
+    <div class="gov-top-bar">
+        <div class="gov-container">
+            <div class="gov-left">
+                <img src="/logo2.png" alt="CSMC Logo" class="csmc-logo"
+                    onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/en/d/d2/Chhatrapati_Sambhajinagar_Municipal_Corporation_logo.png'; this.style.padding='0'; border='0';">
+                <div class="gov-text-box">
+                    <span class="gov-title-en">Chhatrapati Sambhajinagar</span>
+                    <span class="gov-title-sub">Municipal Corporation</span>
+                </div>
+            </div>
+            <div class="gov-right">
+                <div class="civisync-brand">
+                    <span class="brand-icon"><i class="fa-solid fa-leaf"></i></span>
+                    <span class="brand-text">Civi<strong>Sync</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Menu (Dashboard Options) -->
+    <nav class="main-navbar" id="main-nav">
+        <ul class="nav-menu">
+            <li><a href="#about-section" class="nav-item"><i class="fa-solid fa-house"></i> Home</a></li>
+            <li><a href="#contact-section" class="nav-item"><i class="fa-solid fa-phone"></i> Contact Us</a></li>
+            <li><a href="#" onclick="handleTrackClick()" class="nav-item track-btn"><i
+                        class="fa-solid fa-magnifying-glass-location"></i> Track Your Complaint</a></li>
+            <li><a href="login.html" class="nav-item"><i class="fa-solid fa-right-to-bracket"></i> Login</a></li>
+            <li><a href="register.html" class="nav-item"><i class="fa-solid fa-user-plus"></i> New Here? Register</a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-govt">
+        <div class="hero-content max-w-5xl mx-auto">
+            <div
+                class="inline-block bg-blue-100 border border-blue-200 text-deepBlue font-bold py-1 px-3 rounded-full text-sm mb-4">
+                Official Citizen Platform</div>
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-4">Citizen Helpline & Reporting Portal</h1>
+            <p class="text-xl mb-8">Empowering the citizens of Chhatrapati Sambhajinagar with instant issue reporting,
+                tracking, and resolution.</p>
+            <div class="hero-btns flex justify-center gap-4">
+                <a href="#" onclick="handleTrackClick()"
+                    class="bg-municipalBlue hover:bg-deepBlue text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Track
+                    Complaint</a>
+                <a href="register.html"
+                    class="bg-transparent border-2 border-deepBlue text-deepBlue hover:bg-deepBlue hover:text-white font-bold py-3 px-6 rounded-lg transition duration-300">Register
+                    an Issue</a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- How it Works Section -->
+    <section class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center text-deepBlue mb-12">How It Works</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+                <div class="p-6 bg-trustGray rounded-xl shadow-sm hover:shadow-md transition">
+                    <div class="text-municipalBlue text-5xl mb-4"><i class="fa-solid fa-camera"></i></div>
+                    <h3 class="text-xl font-bold mb-2">1. Capture</h3>
+                    <p class="text-gray-600">Take a photo of the civic issue (pothole, garbage, etc.).</p>
+                </div>
+                <div class="p-6 bg-trustGray rounded-xl shadow-sm hover:shadow-md transition">
+                    <div class="text-municipalBlue text-5xl mb-4"><i class="fa-solid fa-microchip"></i></div>
+                    <h3 class="text-xl font-bold mb-2">2. AI Verification</h3>
+                    <p class="text-gray-600">Our AI instantly verifies the image context to prevent spam.</p>
+                </div>
+                <div class="p-6 bg-trustGray rounded-xl shadow-sm hover:shadow-md transition">
+                    <div class="text-municipalBlue text-5xl mb-4"><i class="fa-solid fa-route"></i></div>
+                    <h3 class="text-xl font-bold mb-2">3. Auto Routing</h3>
+                    <p class="text-gray-600">The ticket is smartly routed to the correct municipal department.</p>
+                </div>
+                <div class="p-6 bg-trustGray rounded-xl shadow-sm hover:shadow-md transition">
+                    <div class="text-municipalBlue text-5xl mb-4"><i class="fa-solid fa-check-double"></i></div>
+                    <h3 class="text-xl font-bold mb-2">4. Resolution</h3>
+                    <p class="text-gray-600">Track progress in real-time until the issue gets resolved.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about-section" class="about-section">
+        <div class="about-container">
+            <div class="about-header">
+                <h2>About CiviSync</h2>
+                <div class="divider"></div>
+            </div>
+            <div class="about-grid">
+                <div class="about-text">
+                    <p class="lead-text">CiviSync is a state-of-the-art AI-Based digital grievance redressal portal
+                        crafted for the citizens of Chhatrapati Sambhajinagar.</p>
+                    <p>Designed to be the bridge between the public and the Municipal Corporation, this intelligent
+                        platform dynamically routes your issues—whether related to sanitation, infrastructure, water, or
+                        electricity—straight to the correct departmental authorities.</p>
+                    <ul class="feature-list">
+                        <li><i class="fa-solid fa-circle-check"></i> <strong>Real-Time Tracking:</strong> Monitor your
+                            complaint from submission to resolution.</li>
+                        <li><i class="fa-solid fa-circle-check"></i> <strong>Automated Workflows:</strong> Eliminates
+                            delays through smart departmental routing.</li>
+                        <li><i class="fa-solid fa-circle-check"></i> <strong>Multilingual Accessibility:</strong>
+                            Designed for every citizen, supporting regional languages.</li>
+                    </ul>
+                </div>
+                <div class="about-visual">
+                    <div class="vision-card">
+                        <i class="fa-solid fa-city fa-4x text-primary"></i>
+                        <h3>A Cleaner, Smarter City</h3>
+                        <p>Through active citizen participation and transparent governance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact-section" class="contact-section">
+        <div class="contact-container">
+            <h3>Contact Support</h3>
+            <p> Municipal Corporation Helpdesk: <strong>1800-XXX-XXXX</strong> | Emergency SOS: <strong>112</strong></p>
+        </div>
+    </section>
+
+    <script>
+        // Auth check: Is user logged in?
+        function isLoggedIn() {
+            return localStorage.getItem('civicEmail') && localStorage.getItem('civicName');
+        }
+
+        // Track Complaint click handler
+        function handleTrackClick() {
+            if (isLoggedIn()) {
+                const name = localStorage.getItem('civicName');
+                const email = localStorage.getItem('civicEmail');
+                window.location.href = `/dashboard.html?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
+            } else {
+                alert("Please login to track your complaints. If you are new here, please register first.");
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Smooth scroll for anchor navigation (Home, Contact)
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                // Skip if it has onclick handler
+                if (this.getAttribute('onclick')) return;
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Sticky Navbar logic
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('main-nav');
+            if (window.scrollY > 80) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+    </script>
+
+
+    <!-- Watermark Logo -->
+    <img src="/logo.png" alt="CivicSync Watermark" class="bottom-right-logo">
+
+    <script>
+
+    </script>
+</body>
+
+</html>
